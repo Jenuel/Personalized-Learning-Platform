@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Put, Delete, NotFoundException } from '@nestjs/common';
+import { Controller, Body, Param, Get, Post, Put, Delete, NotFoundException } from '@nestjs/common';
 import { CardsService } from './cards.service';
+import { CreateCardDto } from './dto/create-card.dto';
 
 @Controller('cards')
 export class CardsController {
@@ -11,7 +12,7 @@ export class CardsController {
     }
     
     @Get(":id")
-    getCardById(id: number) {
+    getCardById(@Param("id") id: number) {
         try {
             return this.cardsService.getCardById(id);
         } catch (error) {
@@ -19,5 +20,11 @@ export class CardsController {
         }
         
     }
+
+    @Post()
+    createCard(@Body() cardData: CreateCardDto) {
+        return this.cardsService.createCard(cardData);
+    }
+
 
 }
