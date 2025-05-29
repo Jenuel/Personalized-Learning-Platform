@@ -26,5 +26,22 @@ export class CardsController {
         return this.cardsService.createCard(cardData);
     }
 
+    @Put(":id")
+    updateCard(@Param("id") id: number, @Body() cardData: CreateCardDto) {
+        try {
+            return this.cardsService.updateCard(id, cardData);
+        } catch (error) {
+            throw new NotFoundException(`Card with id ${id} not found`);
+        }
+    }
+
+    @Delete(":id")
+    deleteCard(@Param("id") id: number) {
+        try {
+            return this.cardsService.deleteCard(id);
+        } catch (error) {
+            throw new NotFoundException(`Card with id ${id} not found`);
+        }
+    }
 
 }
