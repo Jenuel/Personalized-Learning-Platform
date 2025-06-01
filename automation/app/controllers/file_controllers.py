@@ -1,6 +1,11 @@
 from fastapi import File, UploadFile, HTTPException
 from PyPDF2 import PdfReader
-from typing import List
+from typing import List, Dict
+from google import genai
+from google.generativeai.types import Content, Part, GenerateContentConfig
+import base64
+import os
+import json
 
 async def handle_file_upload(file: UploadFile = File(...)):
     try:
@@ -11,8 +16,8 @@ async def handle_file_upload(file: UploadFile = File(...)):
         elif file_type == "text/plain":
             text = await extract_text_from_text(file)
 
-        flashcards = await generate_flashcards(text)
-
+        response = await generate_response(text)
+        flashcards = parse_flashcards_json(response)
         # Save to the database
         
         return { "message": "File processed successfully" }
@@ -44,4 +49,43 @@ def extract_text_from_text(file: UploadFile):
     content = file.file.read()
     return content.decode("utf-8") if isinstance(content, bytes) else content
 
-def generate_flashcards(text: str) -> List[str]:
+def generate_response(text: str) -> List[Dict[str, str]]:
+    client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+
+    prompt = (
+        ""
+    )
+
+    contents = [
+        Content(
+            role="user",
+            parts=[Part.from_text(prompt)],
+        )
+    ]
+
+    config = GenerateContentConfig(response_mime_type="text/plain")
+
+    response_text = ""
+    for chunk in client.models.generate_content_stream(
+        model="gemini-2.5-flash-preview-04-17",
+        contents=contents,
+        config=config,
+    ):
+        if chunk.text:
+            response_text += chunk.text
+
+    return response_text
+
+
+def parse_flashcards_json(response_text: str) -> List[Dict[str, str]]:
+    try:
+        flashcards = json.loads(response_text)
+        if isinstance(flashcards, list) and all(
+            isinstance(card, dict) and "question" in card and "answer" in card for card in flashcards
+        ):
+            return flashcards
+        else:
+            raise ValueError("Malformed flashcards format.")
+    except Exception as e:
+        raise ValueError(f"Failed to parse Gemini response as JSON. Raw response:\n{response_text}") from e
+
