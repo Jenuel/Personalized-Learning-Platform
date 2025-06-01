@@ -1,10 +1,19 @@
 from fastapi import File, UploadFile, HTTPException
+from PyPDF2 import PdfReader
+from typing import List
 
 async def handle_file_upload(file: UploadFile = File(...)):
     try:
-        check_file_type(file)
+        file_type = check_file_type(file)
 
-        #AI model processing 
+        if file_type == "application/pdf":
+            text = await extract_text_from_pdf(file)
+        elif file_type == "text/plain":
+            text = await extract_text_from_text(file)
+
+        flashcards = await generate_flashcards(text)
+
+        # Save to the database
         
         return { "message": "File processed successfully" }
 
@@ -22,3 +31,17 @@ def check_file_type(file: UploadFile):
         raise HTTPException(status_code=400, detail="Invalid file type. Only text and PDF files are allowed.")
     
     return True
+
+def extract_text_from_pdf(file: UploadFile) -> str:
+    reader = PdfReader(file.file)
+    text = ""
+    for page in reader.pages:
+        text += page.extract_text() or ""
+    return text 
+
+
+def extract_text_from_text(file: UploadFile):
+    content = file.file.read()
+    return content.decode("utf-8") if isinstance(content, bytes) else content
+
+def generate_flashcards(text: str) -> List[str]:
