@@ -1,4 +1,4 @@
-from fastapi import File, UploadFile, HTTPException
+from fastapi import File, UploadFile, HTTPException, Depends
 from PyPDF2 import PdfReader
 from typing import List, Dict
 from google import genai
@@ -6,6 +6,9 @@ from google.generativeai.types import Content, Part, GenerateContentConfig
 import base64
 import os
 import json
+from sqlalchemy.orm import Session
+from models.flashcard import Flashcard
+from app.database import SessionLocal
 
 async def handle_file_upload(file: UploadFile = File(...)):
     try:
@@ -18,7 +21,7 @@ async def handle_file_upload(file: UploadFile = File(...)):
 
         response = await generate_response(text)
         flashcards = parse_flashcards_json(response)
-        # Save to the database
+        save_flashcards(SessionLocal, flashcards)
         
         return { "message": "File processed successfully" }
 
@@ -89,3 +92,9 @@ def parse_flashcards_json(response_text: str) -> List[Dict[str, str]]:
     except Exception as e:
         raise ValueError(f"Failed to parse Gemini response as JSON. Raw response:\n{response_text}") from e
 
+
+def save_flashcards(db: Session, flashcards: List[Dict[str, str]]):
+    for fc in flashcards:
+        flashcard = Flashcard(question=fc["question"], answer=fc["answer"])
+        db.add(flashcard)
+    db.commit()
