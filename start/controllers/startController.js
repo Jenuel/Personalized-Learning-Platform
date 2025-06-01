@@ -23,8 +23,8 @@ const getAllCards = async (req, res) => {
 }
 
 // Updating the status of the card is after the round
-const updateCardStatus = async (req, res) => {
-
+const updateCardsStatus = async (req, res) => {
+    req
 }
 
-export { getDueCards, getAllCards, updateCardStatus };
+export { getDueCards, getAllCards, updateCardsStatus };
