@@ -1,7 +1,23 @@
 import express from "express"
+import { connectDB } from "./db/client"
+
+dotenv.config()
 
 app = express()
 
-app.listen(3000, () => {
-    console.log("App running")
-})
+
+async function startServer() {
+    try {
+        await connectDB;
+
+        app.listen(process.env.PORT, () => {
+            console.log(`Authentication server running on ${process.env.PORT}`)
+        })
+
+    } catch (error) {
+        console.error("Cannot connect to database")
+        process.exit(1)
+    }
+}
+
+startServer();
