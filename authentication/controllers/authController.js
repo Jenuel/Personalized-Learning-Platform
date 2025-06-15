@@ -1,5 +1,6 @@
-import { findUserByEmail, generateAuthToken, } from "../models/userModel";
-import { loginSchema } from "../schema/authSchema";
+import { createUser, findUserByEmail, generateAuthToken, } from "../models/userModel";
+import { loginSchema, registerSchema } from "../schema/authSchema";
+import bcrypt from 'bcrypt'
 
 const loginUser = async (req, res) => {
 
@@ -33,4 +34,23 @@ const loginUser = async (req, res) => {
     }
 }
 
-export { loginUser }
+const registerUser = async (req, res) => {
+    try {
+        const data = registerSchema(req.body)
+        const { name, email, password } = data;
+
+        const user = await findUserByEmail(email)
+        if (user) {
+            return res.status(409).json({ message: 'Email already exists' });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const createdUser = await createUser(name, email, hashedPassword)
+
+
+    } catch (error) {
+        
+    }
+}
+export { loginUser, registerUser }
