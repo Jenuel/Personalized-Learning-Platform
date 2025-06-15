@@ -1,4 +1,4 @@
-import { findUserByEmail, } from "../models/userModel";
+import { findUserByEmail, generateAuthToken, } from "../models/userModel";
 import { loginSchema } from "../schema/authSchema";
 
 const loginUser = async (req, res) => {
@@ -17,7 +17,7 @@ const loginUser = async (req, res) => {
             return res.status(401).json({ message: 'Invalid email or password' });
         }
 
-        const token = await generateAuthToken();
+        const token = await generateAuthToken({ id: user.id, email: user.email });
 
         res.status(200).json({
             message: 'Login successful',
