@@ -1,6 +1,6 @@
 import { Router } from 'express'
 
-router = Router()
+const router = Router()
 
 router.post("/login")
 
