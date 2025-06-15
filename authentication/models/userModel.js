@@ -1,5 +1,6 @@
 import { client } from "../db/client";
-
+import jwt from "jsonwebtoken";
+import dotenv from "dotenv"
 
 const findUserByEmail = async (email) => {
     const query = "SELECT * FROM users WHERE email = $1";
@@ -9,4 +10,8 @@ const findUserByEmail = async (email) => {
     return result[0];
 }
 
-export { findUserByEmail }
+const generateAuthToken = (payload) => {
+    return jwt.sign(payload, process.env.SECRET_KEY, { expiresIn: "2h"})
+}
+
+export { findUserByEmail, generateAuthToken }
