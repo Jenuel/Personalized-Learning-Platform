@@ -1,5 +1,7 @@
 from fastapi import FastAPI, UploadFile, File
-from app.controllers.file_controllers import handle_file_upload
+from app.controllers.file_extraction import extract_text
+from app.controllers.flashcard_generation import generate_response, parse_flashcards_json, save_flashcards
+from app.database import SessionLocal
 
 app = FastAPI()
 
@@ -10,4 +12,8 @@ async def read_root():
 
 app.post("/upload")
 async def handle_file(file: UploadFile = File(...)):
-    return await handle_file_upload(file)
+    text = await extract_text(file)
+    response = await generate_response(text)
+    flashcards = parse_flashcards_json(response)
+    save_flashcards(SessionLocal, flashcards)
+    return {"message": "File processed and flashcards saved successfully."}
