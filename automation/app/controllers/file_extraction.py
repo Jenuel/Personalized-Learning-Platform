@@ -1,9 +1,5 @@
 from fastapi import File, UploadFile, HTTPException
 from PyPDF2 import PdfReader
-from app.database import SessionLocal
-from dotenv import load_dotenv
-
-load_dotenv()
 
 async def extract_text(file: UploadFile = File(...)):
     try:
@@ -15,11 +11,6 @@ async def extract_text(file: UploadFile = File(...)):
             text = await extract_text_from_plain(file)
 
         return text
-        response = await generate_response(text)
-        flashcards = parse_flashcards_json(response)
-        save_flashcards(SessionLocal, flashcards)
-        
-        return { "message": "File processed successfully" }
 
     except HTTPException as http_exc:
         raise http_exc
