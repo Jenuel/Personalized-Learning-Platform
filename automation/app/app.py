@@ -12,8 +12,17 @@ async def read_root():
 
 app.post("/upload")
 async def handle_file(file: UploadFile = File(...)):
-    text = await extract_text(file)
-    response = await generate_response(text)
-    flashcards = parse_flashcards_json(response)
-    save_flashcards(SessionLocal, flashcards)
-    return {"message": "File processed and flashcards saved successfully."}
+    try:
+        text = await extract_text(file)
+
+        response = await generate_response(text)
+
+        flashcards = parse_flashcards_json(response)
+
+        save_flashcards(SessionLocal, flashcards)
+
+        return {"message": "File processed and flashcards saved successfully."}
+    
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        return {"message": f"An unexpected error occurred: {str(e)}", "status": "error"}
