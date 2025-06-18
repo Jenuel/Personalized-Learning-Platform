@@ -1,16 +1,21 @@
-import { Entity, Column, PrimaryColumn } from 'typeorm';
+import { Entity, Column, PrimaryColumn, OneToOne, JoinColumn } from 'typeorm';
 import { Cards } from './cards.entity';
-import { OneToOne, JoinColumn } from 'typeorm';
 
 @Entity()
 export class CardMetadata {
   @PrimaryColumn()
-  cardId: number; // this is the PK and FK column
+  cardId: number;
 
-  @OneToOne(() => Cards, { onDelete: 'CASCADE'})
-  @JoinColumn({ name: 'cardId' }) // link the relation to this column
+  @OneToOne(() => Cards, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'cardId' })
   card: Cards;
 
-  @Column({ default: 'new' })
-  status: string;
+  @Column({ type: 'int', default: 0 })
+  interval: number;
+
+  @Column({ type: 'date', default: () => 'CURRENT_DATE' })
+  next_review: string; 
+
+  @Column({ type: 'float', default: 2.5 })
+  ease_factor: number;
 }
