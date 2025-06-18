@@ -13,8 +13,8 @@ async function startServer() {
     try {
         await connectDB;
 
-        app.listen(process.env.PORT, () => {
-            console.log(`Authentication server running on ${process.env.PORT}`);
+        app.listen(process.env.PORT || 4000, () => {
+            console.log(`Authentication server running on ${process.env.PORT || 4000}`);
         })
 
     } catch (error) {
