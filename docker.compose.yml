@@ -1,0 +1,57 @@
+version: '3.9'
+
+services:
+  postgresdb:
+    image: postgres
+    container_name: cards_postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5431:5432"
+    volumes:
+      - card-data:/var/lib/postgresql/data
+  
+  auth-service:
+    build: ./authentication
+    container_name: auth-service
+    ports:
+      - "4000:4000"
+    env_file:
+      - ./authentication/.env
+    depends_on:
+      - cards_postgres
+
+
+  cards-service:
+    build: ./cards
+    container_name: cards-service
+    ports:
+      - "5000:5000" 
+    env_file:
+      - ./cards/.env
+    depends_on:
+      - cards_postgres
+
+  start-service:
+    build: ./start
+    container_name: start-service
+    ports:
+      - "6000:6000"
+    env_file:
+      - ./start/.env
+    depends_on:
+      - cards_postgres
+
+  # frontend-service: # Not yet finalized
+  #   build: ./frontend
+  #   container_name: frontend-service
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     - auth-service
+  #     - cards-service
+  #     - start-service
+
+volumes:
+  card-data:
