@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,6 +7,7 @@ import { Plus, BookOpen, Upload, RotateCcw } from "lucide-react";
 import CardManager from "@/components/CardManager";
 import ReviewMode from "@/components/ReviewMode";
 import FileUpload from "@/components/FileUpload";
+import Header from "@/components/Header";
 
 export interface FlashCard {
   id: string;
@@ -88,11 +90,9 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100">
+      <Header />
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-4">
-            Card Genius
-          </h1>
           <p className="text-gray-600 text-lg">Master your knowledge with intelligent flashcards</p>
         </div>
 
