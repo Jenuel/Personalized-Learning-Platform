@@ -1,17 +1,18 @@
 # Personalized-Learning-Platform
 
+**Personal Learning Platform** is a microservice web application that lets users to create and review flashcards. This comes with an automation feature for creating flashcards using the Gemini API through the extracted information from files.  
 
-Ports
-frontend: 3000
-authentication:4000
-cards: 5000
-start: 6000
-automation:7000
+## 🚀 Tech Stack
+![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)
+![Postgres](https://img.shields.io/badge/postgres-%23316192.svg?style=for-the-badge&logo=postgresql&logoColor=white)
+![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
+![Next JS](https://img.shields.io/badge/Next-black?style=for-the-badge&logo=next.js&logoColor=white)
 
+## ✨ Features
+- 📝 Manual Adding of Flashcards
+- 👥 Review feature of Flashcards
+- 🧠 Gemini Powered Automation for Making Flashcards
 
+## ⚙️ Getting Started
 
-from transformers import AutoTokenizer, AutoModelForTokenClassification, TokenClassificationPipeline
-
-tokenizer = AutoTokenizer.from_pretrained("path/to/your/fine-tuned-model")
-model = AutoModelForTokenClassification.from_pretrained("path/to/your/fine-tuned-model")
-ner_pipeline = TokenClassificationPipeline(model=model, tokenizer=tokenizer, aggregation_strategy="simple")
+### Prerequisites
