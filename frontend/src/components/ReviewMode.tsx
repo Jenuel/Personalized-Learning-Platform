@@ -34,8 +34,6 @@ const ReviewMode = ({ cards, onExit }: ReviewModeProps) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isFetchingCards, setIsFetchingCards] = useState(false);
 
-  const dueCards = cards.filter(card => !card.lastReviewed);
-
   const startReview = async (type: 'all' | 'due') => {
     setReviewType(type);
     setIsFetchingCards(true);

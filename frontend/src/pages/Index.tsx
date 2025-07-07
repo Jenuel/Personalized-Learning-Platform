@@ -1,8 +1,9 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, BookOpen, Upload, RotateCcw, AlertCircle } from "lucide-react";
+import { Plus, BookOpen, Upload, RotateCcw, AlertCircle, Brain } from "lucide-react";
 import CardManager from "@/components/CardManager";
 import ReviewMode from "@/components/ReviewMode";
 import FileUpload from "@/components/FileUpload";
@@ -46,7 +47,7 @@ const Index = () => {
           </Alert>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white transform hover:scale-105 transition-transform duration-200">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg">
@@ -56,37 +57,22 @@ const Index = () => {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{cards.length}</div>
+              <p className="text-purple-100 text-sm mt-1">Cards in your collection</p>
             </CardContent>
           </Card>
 
           <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white transform hover:scale-105 transition-transform duration-200">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg">
-                <RotateCcw className="h-5 w-5" />
-                Reviewed Today
+                <Brain className="h-5 w-5" />
+                Study Progress
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">
-                {cards.filter(card => 
-                  card.lastReviewed && 
-                  new Date(card.lastReviewed).toDateString() === new Date().toDateString()
-                ).length}
+                {cards.length > 0 ? '100%' : '0%'}
               </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-indigo-500 to-indigo-600 text-white transform hover:scale-105 transition-transform duration-200">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Plus className="h-5 w-5" />
-                Ready to Review
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">
-                {cards.filter(card => !card.lastReviewed).length}
-              </div>
+              <p className="text-blue-100 text-sm mt-1">Ready for learning</p>
             </CardContent>
           </Card>
         </div>

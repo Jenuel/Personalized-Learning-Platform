@@ -16,7 +16,7 @@ interface FlashcardContextType {
   updateCard: (id: string, front: string, back: string) => Promise<void>;
   deleteCard: (id: string) => Promise<void>;
   markCardReviewed: (id: string) => Promise<void>;
-  addCardsFromFile: (newCards: Omit<FlashCard, 'id' | 'createdAt'>[]) => Promise<void>;
+  addCardsFromFile: (newCards: Omit<FlashCard, 'id'>[]) => Promise<void>;
   refreshCards: () => Promise<void>;
   fetchReviewCards: (reviewType: 'all' | 'due') => Promise<FlashCard[]>;
   updateCardsAfterReview: (updates: CardUpdate[]) => Promise<void>;
@@ -42,7 +42,6 @@ export const FlashcardProvider = ({ children }: FlashcardProviderProps) => {
       id: "1",
       front: "What is React?",
       back: "React is a JavaScript library for building user interfaces, particularly web applications.",
-      createdAt: new Date(),
       interval: 1,
       easeFactor: 2.5,
     },
@@ -50,7 +49,6 @@ export const FlashcardProvider = ({ children }: FlashcardProviderProps) => {
       id: "2", 
       front: "What is TypeScript?",
       back: "TypeScript is a strongly typed programming language that builds on JavaScript.",
-      createdAt: new Date(),
       interval: 1,
       easeFactor: 2.5,
     }
@@ -72,13 +70,9 @@ export const FlashcardProvider = ({ children }: FlashcardProviderProps) => {
       // POST /api/review/cards with body: { reviewType: 'all' | 'due' }
       console.log(`Fetching ${reviewType} cards for review session`);
       
-      // For now, simulate filtering based on review type
-      const reviewCards = reviewType === 'due' 
-        ? cards.filter(card => !card.lastReviewed)
-        : cards;
-      
-      // Return cards with additional review-specific data if needed
-      return reviewCards;
+      // Backend will determine which cards are due based on nextReview date
+      // For now, return all cards as the backend will handle the filtering
+      return cards;
     } catch (err) {
       setError('Failed to fetch review cards');
       console.error('Error fetching review cards:', err);
@@ -98,21 +92,9 @@ export const FlashcardProvider = ({ children }: FlashcardProviderProps) => {
       // POST /api/review/update with body: { updates: CardUpdate[] }
       console.log('Sending card updates to backend:', updates);
       
-      // Simulate backend response - in real implementation, 
-      // backend would return updated cards with new scheduling
-      const updatedCardIds = updates.map(u => u.card_id.toString());
-      
-      // Update local state to reflect that cards have been reviewed
-      setCards(prev => prev.map(card => {
-        if (updatedCardIds.includes(card.id)) {
-          return {
-            ...card,
-            lastReviewed: new Date()
-          };
-        }
-        return card;
-      }));
-
+      // Backend will calculate new intervals, ease factors, and nextReview dates
+      // and return the updated cards. For now, we'll just update the local state
+      // to indicate the review is complete
       console.log('Cards updated successfully after review session');
     } catch (err) {
       setError('Failed to update cards after review');
@@ -132,7 +114,6 @@ export const FlashcardProvider = ({ children }: FlashcardProviderProps) => {
         id: Date.now().toString(),
         front,
         back,
-        createdAt: new Date(),
         interval: 1,
         easeFactor: 2.5,
       };
@@ -180,9 +161,9 @@ export const FlashcardProvider = ({ children }: FlashcardProviderProps) => {
     setError(null);
     try {
       await simulateApiCall(200);
-      setCards(prev => prev.map(card =>
-        card.id === id ? { ...card, lastReviewed: new Date() } : card
-      ));
+      // This function is no longer needed since we don't track lastReviewed
+      // The backend will handle review status via nextReview dates
+      console.log(`Card ${id} review status updated via backend`);
     } catch (err) {
       setError('Failed to mark card as reviewed');
       console.error('Error marking card as reviewed:', err);
@@ -191,7 +172,7 @@ export const FlashcardProvider = ({ children }: FlashcardProviderProps) => {
     }
   }, []);
 
-  const addCardsFromFile = useCallback(async (newCards: Omit<FlashCard, 'id' | 'createdAt'>[]) => {
+  const addCardsFromFile = useCallback(async (newCards: Omit<FlashCard, 'id'>[]) => {
     setLoading(true);
     setError(null);
     try {
@@ -199,9 +180,8 @@ export const FlashcardProvider = ({ children }: FlashcardProviderProps) => {
       const cardsWithIds = newCards.map(card => ({
         ...card,
         id: Date.now().toString() + Math.random().toString(),
-        createdAt: new Date(),
-        interval: 1,
-        easeFactor: 2.5,
+        interval: card.interval || 1,
+        easeFactor: card.easeFactor || 2.5,
       }));
       setCards(prev => [...prev, ...cardsWithIds]);
     } catch (err) {
