@@ -1,5 +1,7 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { FlashCard } from '@/types/FlashCard';
+import axios from 'axios';
+import { add } from 'date-fns';
 
 interface CardUpdate {
   card_id: number;
@@ -12,6 +14,7 @@ interface FlashcardContextType {
   cards: FlashCard[];
   loading: boolean;
   error: string | null;
+  initialized: boolean;
   addCard: (front: string, back: string) => Promise<void>;
   updateCard: (id: string, front: string, back: string) => Promise<void>;
   deleteCard: (id: string) => Promise<void>;
@@ -20,6 +23,7 @@ interface FlashcardContextType {
   refreshCards: () => Promise<void>;
   fetchReviewCards: (reviewType: 'all' | 'due') => Promise<FlashCard[]>;
   updateCardsAfterReview: (updates: CardUpdate[]) => Promise<void>;
+  initializeCards: () => Promise<void>;
 }
 
 const FlashcardContext = createContext<FlashcardContextType | undefined>(undefined);
@@ -37,41 +41,41 @@ interface FlashcardProviderProps {
 }
 
 export const FlashcardProvider = ({ children }: FlashcardProviderProps) => {
-  const [cards, setCards] = useState<FlashCard[]>([
-    {
-      id: "1",
-      front: "What is React?",
-      back: "React is a JavaScript library for building user interfaces, particularly web applications.",
-      interval: 1,
-      easeFactor: 2.5,
-    },
-    {
-      id: "2", 
-      front: "What is TypeScript?",
-      back: "TypeScript is a strongly typed programming language that builds on JavaScript.",
-      interval: 1,
-      easeFactor: 2.5,
-    }
-  ]);
-  const [loading, setLoading] = useState(false);
+  const [cards, setCards] = useState<FlashCard[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [initialized, setInitialized] = useState(false);
 
-  const simulateApiCall = (duration: number = 500) => {
-    return new Promise(resolve => setTimeout(resolve, duration));
-  };
+
+  const initializeCards = useCallback(async () => {
+    if (initialized) return;
+    
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.get('http://localhost:3000/api/flashcards');
+      const fetchedCards: FlashCard[] = response.data;
+
+      setCards(fetchedCards);
+      setInitialized(true);
+    } catch (err) {
+      setError('Failed to load cards');
+      console.error('Error initializing cards:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [initialized]);
 
   const fetchReviewCards = useCallback(async (reviewType: 'all' | 'due'): Promise<FlashCard[]> => {
     setLoading(true);
     setError(null);
     try {
-      await simulateApiCall(1000);
-      
-      // Simulate API call to backend
-      // POST /api/review/cards with body: { reviewType: 'all' | 'due' }
-      console.log(`Fetching ${reviewType} cards for review session`);
-      
-      // Backend will determine which cards are due based on nextReview date
-      // For now, return all cards as the backend will handle the filtering
+      const response = await axios.get('http://localhost:3000/api/review/cards', {
+        params: { reviewType },
+      });
+
+      const cards: FlashCard[] = response.data;
+    
       return cards;
     } catch (err) {
       setError('Failed to fetch review cards');
@@ -109,15 +113,13 @@ export const FlashcardProvider = ({ children }: FlashcardProviderProps) => {
     setLoading(true);
     setError(null);
     try {
-      await simulateApiCall();
-      const newCard: FlashCard = {
-        id: Date.now().toString(),
+      const response = await axios.post('http://localhost:3000/api/flashcards', {
         front,
         back,
-        interval: 1,
-        easeFactor: 2.5,
-      };
-      setCards(prev => [...prev, newCard]);
+      });
+
+      const addedCard: FlashCard = response.data
+      setCards(prev => [...prev, addedCard]);
     } catch (err) {
       setError('Failed to add card');
       console.error('Error adding card:', err);
@@ -130,7 +132,11 @@ export const FlashcardProvider = ({ children }: FlashcardProviderProps) => {
     setLoading(true);
     setError(null);
     try {
-      await simulateApiCall();
+      const response = await axios.put(`http://localhost:3000/api/flashcards/${id}`, {
+        front,
+        back,
+      });
+      const updatedCard: FlashCard = response.data;
       setCards(prev => prev.map(card => 
         card.id === id ? { ...card, front, back } : card
       ));
@@ -146,7 +152,12 @@ export const FlashcardProvider = ({ children }: FlashcardProviderProps) => {
     setLoading(true);
     setError(null);
     try {
-      await simulateApiCall();
+      const response = await axios.delete(`http://localhost:3000/api/flashcards/${id}`);
+
+      if (response.status !== 204) {
+        throw new Error('Failed to delete card');
+      }
+
       setCards(prev => prev.filter(card => card.id !== id));
     } catch (err) {
       setError('Failed to delete card');
@@ -209,6 +220,7 @@ export const FlashcardProvider = ({ children }: FlashcardProviderProps) => {
     cards,
     loading,
     error,
+    initialized,
     addCard,
     updateCard,
     deleteCard,
@@ -217,6 +229,7 @@ export const FlashcardProvider = ({ children }: FlashcardProviderProps) => {
     refreshCards,
     fetchReviewCards,
     updateCardsAfterReview,
+    initializeCards,
   };
 
   return (
