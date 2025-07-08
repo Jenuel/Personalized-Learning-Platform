@@ -1,5 +1,5 @@
 from fastapi import File, UploadFile, HTTPException
-from PyPDF2 import PdfReader
+import pdfplumber
 
 async def extract_text(file: UploadFile = File(...)):
     try:
@@ -28,11 +28,11 @@ def check_file_type(file: UploadFile):
     return True
 
 def extract_text_from_pdf(file: UploadFile) -> str:
-    reader = PdfReader(file.file)
     text = ""
-    for page in reader.pages:
-        text += page.extract_text() or ""
-    return text 
+    with pdfplumber.open(file.file) as pdf:
+        for page in pdf.pages:
+            text += page.extract_text() or ""
+    return text
 
 def extract_text_from_plain(file: UploadFile):
     content = file.file.read()

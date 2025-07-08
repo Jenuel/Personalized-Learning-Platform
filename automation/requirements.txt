@@ -3,6 +3,6 @@ uvicorn
 sqlalchemy
 python-dotenv
 pydantic
-PyPDF2
+pdfplumber
 google-generativeai
 python-multipart
