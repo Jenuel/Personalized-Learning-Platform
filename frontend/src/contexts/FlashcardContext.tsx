@@ -18,9 +18,7 @@ interface FlashcardContextType {
   addCard: (front: string, back: string) => Promise<void>;
   updateCard: (id: string, front: string, back: string) => Promise<void>;
   deleteCard: (id: string) => Promise<void>;
-  markCardReviewed: (id: string) => Promise<void>;
   addCardsFromFile: (newCards: Omit<FlashCard, 'id'>[]) => Promise<void>;
-  refreshCards: () => Promise<void>;
   fetchReviewCards: (reviewType: 'all' | 'due') => Promise<FlashCard[]>;
   updateCardsAfterReview: (updates: CardUpdate[]) => Promise<void>;
   initializeCards: () => Promise<void>;
@@ -167,22 +165,6 @@ export const FlashcardProvider = ({ children }: FlashcardProviderProps) => {
     }
   }, []);
 
-  const markCardReviewed = useCallback(async (id: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      await simulateApiCall(200);
-      // This function is no longer needed since we don't track lastReviewed
-      // The backend will handle review status via nextReview dates
-      console.log(`Card ${id} review status updated via backend`);
-    } catch (err) {
-      setError('Failed to mark card as reviewed');
-      console.error('Error marking card as reviewed:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   const addCardsFromFile = useCallback(async (newCards: Omit<FlashCard, 'id'>[]) => {
     setLoading(true);
     setError(null);
@@ -203,19 +185,6 @@ export const FlashcardProvider = ({ children }: FlashcardProviderProps) => {
     }
   }, []);
 
-  const refreshCards = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      await simulateApiCall();
-    } catch (err) {
-      setError('Failed to refresh cards');
-      console.error('Error refreshing cards:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   const value: FlashcardContextType = {
     cards,
     loading,
@@ -224,9 +193,7 @@ export const FlashcardProvider = ({ children }: FlashcardProviderProps) => {
     addCard,
     updateCard,
     deleteCard,
-    markCardReviewed,
     addCardsFromFile,
-    refreshCards,
     fetchReviewCards,
     updateCardsAfterReview,
     initializeCards,
