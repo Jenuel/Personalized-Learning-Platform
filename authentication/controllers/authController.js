@@ -1,4 +1,4 @@
-import { createUser, findUserByEmail, generateAuthToken, } from "../models/userModel";
+import { createUser, findUserByEmail, generateAuthToken, verifyAuthToken } from "../models/userModel";
 import { loginSchema, registerSchema } from "../schema/authSchema";
 import bcrypt from 'bcrypt'
 
@@ -20,9 +20,14 @@ const loginUser = async (req, res) => {
 
         const token = await generateAuthToken({ id: user.id, email: user.email });
 
+        res.cookie('authToken', token, {
+            httpOnly: true,
+            maxAge: 2 * 60 * 60 * 1000,
+            sameSite: 'strict',
+        })
+
         res.status(200).json({
             message: 'Login successful',
-            token,
             user: {
                 id: user._id,
                 email: user.email,
@@ -32,6 +37,21 @@ const loginUser = async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
+}
+
+const verifyCredentials = (req, res) => {
+    const token = req.cookies.authToken;
+
+    if (!token) {
+        return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    const decoded = verifyAuthToken(token);
+    if (!decoded) {
+        return res.status(401).json({ message: 'Invalid token' });
+    }
+
+    res.status(200).json({ message: 'Token is valid', user: decoded });
 }
 
 const registerUser = async (req, res) => {
@@ -53,4 +73,4 @@ const registerUser = async (req, res) => {
         
     }
 }
-export { loginUser, registerUser }
+export { loginUser, registerUser, verifyCredentials }
