@@ -1,9 +1,22 @@
 from fastapi import FastAPI, UploadFile, File
 from app.controllers.file_extraction import extract_text
 from app.controllers.flashcard_generation import generate_response, parse_flashcards_json, save_flashcards
-from app.database import SessionLocal
+from app.database import Base, engine
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], 
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.on_event("startup")
+def init_db():
+    Base.metadata.create_all(bind=engine)
 
 
 app.get("/")
@@ -14,12 +27,12 @@ app.post("/upload")
 async def handle_file(file: UploadFile = File(...)):
     try:
         text = await extract_text(file)
+        print(f"Extracted text: {text[:100]}...")  # Log the first 100 characters of the extracted text
+        # response = await generate_response(text)
 
-        response = await generate_response(text)
+        # flashcards = parse_flashcards_json(response)
 
-        flashcards = parse_flashcards_json(response)
-
-        save_flashcards(SessionLocal, flashcards)
+        # save_flashcards(SessionLocal, flashcards)
 
         return {"message": "File processed and flashcards saved successfully."}
     
