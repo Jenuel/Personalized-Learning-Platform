@@ -22,7 +22,11 @@ const getDueCards = async (req, res) => {
 
 const getAllCards = async (req, res) => {
     try {
-        const query = `SELECT * FROM cards`
+        const query = `
+            SELECT c.*, cm.*
+            FROM cards c
+            JOIN card_metadata cm ON c.cardId = cm.cardId;
+        `;
     
         const result = await client.query(query);
         res.status(200).json(result.rows);
