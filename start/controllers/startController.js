@@ -7,7 +7,7 @@ const getDueCards = async (req, res) => {
         
         const query = `
             SELECT c.cardId, c.question, c.answer
-            FROM cards c
+            FROM flashcards c
             JOIN card_metadata cm ON c.cardId = cm.cardId
             WHERE cm.next_review = $1;
         `;
@@ -24,7 +24,7 @@ const getAllCards = async (req, res) => {
     try {
         const query = `
             SELECT c.*, cm.*
-            FROM cards c
+            FROM flashcards c
             JOIN card_metadata cm ON c.cardId = cm.cardId;
         `;
     
