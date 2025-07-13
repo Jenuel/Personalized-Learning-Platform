@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { Cards } from './cards.entity';
+import { CardMetadata } from './cardmetadata.entity';
 
 @Injectable()
 export class CardsService {
@@ -25,11 +26,19 @@ export class CardsService {
         return card;
     }
 
-    async createCard(cardData: Partial<Cards>) : Promise<Cards> {
+    async createCard(cardData: Partial<Cards>): Promise<Cards> {
         return await this.dataSource.transaction(async (manager) => {
+
             const newCard = this.cardsRepository.create(cardData);
-            return this.cardsRepository.save(newCard);
-        })
+
+            if (!newCard.metadata) {
+                const meta = new CardMetadata();
+                meta.card = newCard;        
+                newCard.metadata = meta;     
+            }
+
+            return await manager.save(newCard);
+        });
     }
 
     async updateCard(cardId: number, cardData: Partial<Cards>): Promise<Cards> {
