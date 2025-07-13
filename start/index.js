@@ -1,6 +1,6 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import connectDB from './db/client.js';
+import { connectDB } from './db/client.js';
 import startRoutes from './routes/startRoutes.js';
 import { createTables } from './db/initDb.js';
 

@@ -1,7 +1,7 @@
 import express from "express";
 import { getDueCards, getAllCards, handleCards } from "../controllers/startController.js";
 
-router = express.Router();
+const router = express.Router();
 
 router.get("/due", getDueCards);
 
