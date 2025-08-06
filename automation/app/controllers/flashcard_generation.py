@@ -2,7 +2,7 @@ import os
 import json
 from google import genai
 from sqlalchemy.orm import Session
-from models.flashcard import Flashcard
+from app.models.flashcard import Flashcard
 from typing import List, Dict
 from dotenv import load_dotenv
 from pydantic import ValidationError

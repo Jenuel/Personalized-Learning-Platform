@@ -12,7 +12,13 @@ class Flashcard(Base):
     question = Column(String, nullable=False)
     answer = Column(String, nullable=False)
 
-    metadata = relationship("CardMetadata", back_populates="card", uselist=False, cascade="all, delete", passive_deletes=True)
+    card_metadata = relationship(
+        "CardMetadata",
+        back_populates="card",
+        uselist=False,
+        cascade="all, delete",
+        passive_deletes=True
+    )
 
 
 class CardMetadata(Base):
@@ -23,4 +29,4 @@ class CardMetadata(Base):
     next_review = Column(Date, default=func.current_date())
     ease_factor = Column(Float, default=2.5)
 
-    card = relationship("Flashcard", back_populates="metadata", uselist=False)
+    card = relationship("Flashcard", back_populates="card_metadata", uselist=False)
