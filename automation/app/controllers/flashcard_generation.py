@@ -1,6 +1,8 @@
 import os
 import json
+import re
 from google import genai
+from google.genai import types
 from sqlalchemy.orm import Session
 from app.models.flashcard import Flashcard
 from typing import List, Dict
@@ -10,54 +12,78 @@ from app.schema.flashcard_schema import GeminiResponse
 
 load_dotenv()
 
-def generate_response(text: str) -> List[Dict[str, str]]:
+async def generate_response(text: str) -> List[Dict[str, str]]:
 
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
     if not GEMINI_API_KEY:
         print("Error: GEMINI_API_KEY not found in environment variables.")
         return None
-
-    genai.configure(api_key=GEMINI_API_KEY)
-
-    prompt = (
-        f"Generate a list of flashcards (question and answer pairs) based on the following text. "
-        f"Format the output as a JSON object with a single key 'flashcards', "
-        f"which contains a list of objects, each with 'question' and 'answer' keys. "
-        f"Ensure there are at least 3-5 flashcards generated if possible, and no more than 10. "
-        f"Keep questions concise and answers informative.\n\nText: \"{text}\""
+    
+    client = genai.Client(
+        api_key=GEMINI_API_KEY,
     )
+
+    prompt = f"""
+    You are a helpful assistant that creates study flashcards.
+
+    Based on the study material below, generate flashcards in this exact JSON format:
+    [
+    {{"question": "What is ...?", "answer": "Your answer here"}},
+    ...
+    ]
+
+    Important:
+    - Use only double quotes (") for keys and values to comply with JSON standards.
+    - Return only valid JSON.
+    - Do not include any explanation or extra text.
+
+    Study Material:
+    {text}
+    """
+
 
     response_text = ""
 
-    model = genai.GenerativeModel('gemini-2.5-flash-preview-04-17')
-    try:
+    model = "gemini-2.5-pro"
 
-        for chunk in model.generate_content(
-            [prompt],
-            stream=True,  
-            generation_config={
-                "response_mime_type": "application/json",
-                "temperature": 0.3
-            },
-        ):
+    contents = [
+        types.Content(
+            role="user",
+            parts=[types.Part(text=prompt)],
+        ),
+    ]
+
+    generate_content_config = types.GenerateContentConfig(
+        thinking_config = types.ThinkingConfig(
+            thinking_budget = -1,
+        ),
+    )
+
+    try:
+        for chunk in client.models.generate_content_stream(
+            model=model,
+            contents=contents,
+            config=generate_content_config,
+        ):  
             
             if chunk.text:
                 response_text += chunk.text
         
-        json_data = json.loads(response_text)
-        parsed_response = GeminiResponse(**json_data)
+        cleaned_response_text = re.sub(r"^```(?:json)?|```$", "", response_text.strip(), flags=re.MULTILINE).strip()
 
-        return [card.model_dump() for card in parsed_response.flashcards]
+        json_data = json.loads(cleaned_response_text)
+        
+        return json_data
 
     except json.JSONDecodeError as e:
         print(f"JSON decoding error: {e}")
-        print(f"Raw response text: {response_text}")
+        print(f"1Raw response text: {response_text}")
     except ValidationError as e:
         print(f"Pydantic validation error: {e}")
-        print(f"Raw response text: {response_text}")
+        print(f"2Raw response text: {response_text}")
     except Exception as e:
         print(f"Unexpected error during API call or response processing: {e}")
-        print(f"Raw response text: {response_text}")
+        print(f"3Raw response text: {response_text}")
 
     return None
 

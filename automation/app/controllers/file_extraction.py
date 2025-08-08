@@ -4,11 +4,11 @@ import pdfplumber
 async def extract_text(file: UploadFile = File(...)):
     try:
         file_type = check_file_type(file)
-
+        print(f"Processing file of type: {file_type}")
         if file_type == "application/pdf":
-            text = await extract_text_from_pdf(file)
+            text = extract_text_from_pdf(file)
         elif file_type == "text/plain":
-            text = await extract_text_from_plain(file)
+            text = extract_text_from_plain(file)
 
         return text
 
@@ -25,7 +25,7 @@ def check_file_type(file: UploadFile):
     if file.content_type not in allowed_types:
         raise HTTPException(status_code=400, detail="Invalid file type. Only text and PDF files are allowed.")
     
-    return True
+    return file.content_type
 
 def extract_text_from_pdf(file: UploadFile) -> str:
     text = ""
