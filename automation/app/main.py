@@ -18,7 +18,6 @@ app.add_middleware(
 def init_db():
     Base.metadata.create_all(bind=engine)
 
-
 @app.get("/")
 async def read_root():
     return {"message": "Welcome to the FastAPI Automation Application"}
@@ -27,16 +26,12 @@ async def read_root():
 async def handle_file(file: UploadFile = File(...)):
     try:
         text = await extract_text(file)
+        flashcards_raw = await generate_response(text)
 
-        response = await generate_response(text)
-        print(f"Response from Gemini API: {response}")
-        flashcards = parse_flashcards_json(response)
-        print(f"Parsed flashcards")
-        save_flashcards(SessionLocal, flashcards)
-        print(f"Flashcards saved to database")
-        
-        return {"flashcards": flashcards, "status": "success"}
-    
+        flashcards = parse_flashcards_json(flashcards_raw)
+        db_flashcards = save_flashcards(SessionLocal(), flashcards)
+
+        return {"flashcards": db_flashcards, "status": "success"}
     except Exception as e:
-        print(f"An unexpected error occurred: {e}")
+        print(f"[ERROR] {e}")
         return {"message": f"An unexpected error occurred: {str(e)}", "status": "error"}
