@@ -7,7 +7,7 @@ const getDueCards = async (req, res) => {
         const today = new Date().toISOString().split('T')[0];
 
         const query = `
-            SELECT c."cardId", c.question, c.answer
+            SELECT c.*, cm.*
             FROM flashcards c
             JOIN card_metadata cm ON c."cardId" = cm."cardId"
             WHERE cm.next_review = $1;
