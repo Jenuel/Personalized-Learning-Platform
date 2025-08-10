@@ -4,6 +4,7 @@ import type React from "react"
 import { createContext, useContext, useState } from "react"
 import { useNotifications } from "@/components/notification-provider"
 import type { Flashcard, ReviewCard } from "@/components/dashboard"
+import axios from "axios"
 
 interface FileUploadResponse {
   flashcards: Array<{
@@ -124,20 +125,17 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
     setIsCreatingCard(true)
 
     try {
-      const response = await fetch("/api/flashcards", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ question, answer }),
-      })
+      const response = await axios.post(
+        "/api/flashcards",
+        { question, answer }, // axios handles JSON.stringify automatically
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
-      }
-
-      const flashcard: Flashcard = await response.json()
+      const flashcard: Flashcard = response.data
       success("Success", "Flashcard created successfully")
       return flashcard
     } catch (err) {
@@ -153,20 +151,17 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
     setIsUpdatingCard(true)
 
     try {
-      const response = await fetch(`/api/flashcards/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ question, answer }),
-      })
+      const response = await axios.put(
+        `/api/flashcards/${id}`,
+        { question, answer }, // axios handles JSON automatically
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
-      }
-
-      const flashcard: Flashcard = await response.json()
+      const flashcard: Flashcard = response.data
       success("Success", "Flashcard updated successfully")
       return flashcard
     } catch (err) {
@@ -179,39 +174,31 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
   }
 
   const deleteFlashcard = async (id: string): Promise<void> => {
-    setIsDeletingCard(true)
+    setIsDeletingCard(true);
 
     try {
-      const response = await fetch(`/api/flashcards/${id}`, {
-        method: "DELETE",
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
-      }
-
-      success("Success", "Flashcard deleted successfully")
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to delete flashcard"
-      error("Error", errorMessage)
-      throw err
+      await axios.delete(`/api/flashcards/${id}`);
+      success("Success", "Flashcard deleted successfully");
+    } catch (err: any) {
+      const errorMessage =
+        err.response?.data?.error ||
+        (err instanceof Error ? err.message : "Failed to delete flashcard");
+      error("Error", errorMessage);
+      throw err;
     } finally {
-      setIsDeletingCard(false)
+      setIsDeletingCard(false);
     }
-  }
+  };
+
 
   const fetchFlashcards = async (): Promise<Flashcard[]> => {
     setIsFetchingCards(true)
 
     try {
-      const response = await fetch("/api/flashcards")
+      const response = await axios.get("https://localhost:/api/flashcards") //TODO: Update
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch flashcards")
-      }
+      const flashcards: Flashcard[] = response.data
 
-      const flashcards: Flashcard[] = await response.json()
       return flashcards
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to load flashcards"
@@ -249,17 +236,17 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
       formData.append("file", file)
 
       // Make API call
-      const response = await fetch("/api/upload-file", {
-        method: "POST",
-        body: formData,
-      })
+      const response = await axios.post<FileUploadResponse>(
+        "https://localhost:3000/api/flashcards/upload", //TODO: Update
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data"
+          }
+        }
+      );
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
-      }
-
-      const data: FileUploadResponse = await response.json()
+      const data: FileUploadResponse = response.data
 
       if (data.status !== "success" || !data.flashcards) {
         throw new Error("Invalid response format or failed status")
@@ -286,52 +273,49 @@ export function ApiProvider({ children }: { children: React.ReactNode }) {
     setIsFetchingCards(true)
 
     try {
-      const response = await fetch(`/api/review/cards?type=${type}`)
+      const response = await axios.get<ReviewCard[]>(`/api/review/cards`, {
+        params: { type },
+      });
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch flashcards")
-      }
-
-      const cards: ReviewCard[] = await response.json()
-      return cards
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to load flashcards for review"
-      error("Error", errorMessage)
-      throw err
+      return response.data;
+    } catch (err: any) {
+      const errorMessage =
+        err.response?.data?.error ||
+        (err instanceof Error ? err.message : "Failed to load flashcards for review");
+      error("Error", errorMessage);
+      throw err;
     } finally {
-      setIsFetchingCards(false)
+      setIsFetchingCards(false);
     }
   }
 
   const updateReviewResults = async (updates: ReviewUpdateRequest[]): Promise<void> => {
-    setIsUpdatingReview(true)
+    setIsUpdatingReview(true);
 
     try {
-      const response = await fetch("/api/review/update", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ updates }),
-      })
+      const response = await axios.post<ReviewUpdateResponse>(
+        "/api/review/update",
+        { updates },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
-      if (!response.ok) {
-        throw new Error("Failed to update flashcards")
+      if (response.data.status !== "success") {
+        throw new Error(response.data.message || "Failed to update review results");
       }
-
-      const result: ReviewUpdateResponse = await response.json()
-
-      if (result.status !== "success") {
-        throw new Error(result.message || "Failed to update review results")
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to save review results"
-      error("Error", errorMessage)
-      throw err
+    } catch (err: any) {
+      const errorMessage =
+        err.response?.data?.error ||
+        (err instanceof Error ? err.message : "Failed to save review results");
+      error("Error", errorMessage);
+      throw err;
     } finally {
-      setIsUpdatingReview(false)
+      setIsUpdatingReview(false);
     }
-  }
+  };
 
   const contextValue: ApiContextType = {
     // Loading states
