@@ -1,7 +1,7 @@
 import { Entity, Column, PrimaryColumn, OneToOne, JoinColumn } from 'typeorm';
 import { Cards } from './cards.entity';
 
-@Entity()
+@Entity('card_metadata')
 export class CardMetadata {
   @PrimaryColumn()
   cardId: number;

@@ -3,15 +3,13 @@ import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Upload, FileText, CheckCircle, AlertTriangle } from "lucide-react";
-import { FlashCard } from "@/pages/Index";
+import { Upload, FileText, CheckCircle, AlertTriangle, Loader2 } from "lucide-react";
+import { FlashCard } from "@/types/FlashCard";
 import { useToast } from "@/hooks/use-toast";
+import { useFlashcards } from "@/contexts/FlashcardContext";
 
-interface FileUploadProps {
-  onCardsGenerated: (cards: Omit<FlashCard, 'id' | 'createdAt'>[]) => void;
-}
-
-const FileUpload = ({ onCardsGenerated }: FileUploadProps) => {
+const FileUpload = () => {
+  const { addCardsFromFile, loading } = useFlashcards();
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -41,15 +39,9 @@ const FileUpload = ({ onCardsGenerated }: FileUploadProps) => {
   };
 
   const simulateCardGeneration = async (fileContent: string) => {
-    // This simulates calling your backend API
-    // In real implementation, you would send the file content to your backend
-    // and receive generated cards in response
-    
     const lines = fileContent.split('\n').filter(line => line.trim().length > 0);
     const generatedCards: Omit<FlashCard, 'id' | 'createdAt'>[] = [];
 
-    // Simple example: Create cards from lines that contain question marks
-    // In real implementation, your backend would use AI to generate meaningful Q&A pairs
     lines.forEach((line, index) => {
       if (line.includes('?')) {
         generatedCards.push({
@@ -64,7 +56,6 @@ const FileUpload = ({ onCardsGenerated }: FileUploadProps) => {
       }
     });
 
-    // If no meaningful cards generated, create some example cards
     if (generatedCards.length === 0) {
       generatedCards.push(
         {
@@ -88,7 +79,6 @@ const FileUpload = ({ onCardsGenerated }: FileUploadProps) => {
     setUploadProgress(0);
 
     try {
-      // Simulate progress
       for (let i = 0; i <= 100; i += 10) {
         setUploadProgress(i);
         await new Promise(resolve => setTimeout(resolve, 200));
@@ -117,8 +107,8 @@ const FileUpload = ({ onCardsGenerated }: FileUploadProps) => {
     }
   };
 
-  const addCardsToCollection = () => {
-    onCardsGenerated(previewCards);
+  const addCardsToCollection = async () => {
+    await addCardsFromFile(previewCards);
     setPreviewCards([]);
     setUploadedFile(null);
     if (fileInputRef.current) {
@@ -188,7 +178,11 @@ const FileUpload = ({ onCardsGenerated }: FileUploadProps) => {
             <Button
               onClick={processFile}
               className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
+              disabled={loading}
             >
+              {loading ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : null}
               Generate Cards from File
             </Button>
           )}
@@ -203,7 +197,14 @@ const FileUpload = ({ onCardsGenerated }: FileUploadProps) => {
                 <CheckCircle className="h-5 w-5 text-green-500" />
                 Generated Cards Preview
               </span>
-              <Button onClick={addCardsToCollection} className="bg-green-600 hover:bg-green-700">
+              <Button 
+                onClick={addCardsToCollection} 
+                className="bg-green-600 hover:bg-green-700"
+                disabled={loading}
+              >
+                {loading ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : null}
                 Add {previewCards.length} Cards
               </Button>
             </CardTitle>

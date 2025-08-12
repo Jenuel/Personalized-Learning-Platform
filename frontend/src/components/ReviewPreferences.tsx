@@ -3,17 +3,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { BookOpen, Clock, ArrowLeft } from "lucide-react";
+import { BookOpen, Clock, ArrowLeft, Loader2 } from "lucide-react";
 import { useState } from "react";
 
 interface ReviewPreferencesProps {
-  totalCards: number;
-  dueCards: number;
   onStartReview: (reviewType: 'all' | 'due') => void;
   onBack: () => void;
+  isLoading?: boolean;
 }
 
-const ReviewPreferences = ({ totalCards, dueCards, onStartReview, onBack }: ReviewPreferencesProps) => {
+const ReviewPreferences = ({ onStartReview, onBack, isLoading = false }: ReviewPreferencesProps) => {
   const [reviewType, setReviewType] = useState<'all' | 'due'>('due');
 
   return (
@@ -32,30 +31,20 @@ const ReviewPreferences = ({ totalCards, dueCards, onStartReview, onBack }: Revi
                 <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-gray-50 cursor-pointer">
                   <RadioGroupItem value="due" id="due" />
                   <Label htmlFor="due" className="flex-1 cursor-pointer">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-orange-500" />
-                        <span className="font-medium">Due Cards Only</span>
-                      </div>
-                      <span className="text-sm text-gray-500 bg-orange-100 px-2 py-1 rounded">
-                        {dueCards} cards
-                      </span>
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-orange-500" />
+                      <span className="font-medium">Due Cards Only</span>
                     </div>
-                    <p className="text-sm text-gray-600 mt-1">Review cards that haven't been studied yet</p>
+                    <p className="text-sm text-gray-600 mt-1">Review cards that need to be studied</p>
                   </Label>
                 </div>
 
                 <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-gray-50 cursor-pointer">
                   <RadioGroupItem value="all" id="all" />
                   <Label htmlFor="all" className="flex-1 cursor-pointer">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <BookOpen className="h-4 w-4 text-blue-500" />
-                        <span className="font-medium">All Cards</span>
-                      </div>
-                      <span className="text-sm text-gray-500 bg-blue-100 px-2 py-1 rounded">
-                        {totalCards} cards
-                      </span>
+                    <div className="flex items-center gap-2">
+                      <BookOpen className="h-4 w-4 text-blue-500" />
+                      <span className="font-medium">All Cards</span>
                     </div>
                     <p className="text-sm text-gray-600 mt-1">Review all cards in your collection</p>
                   </Label>
@@ -68,6 +57,7 @@ const ReviewPreferences = ({ totalCards, dueCards, onStartReview, onBack }: Revi
                 onClick={onBack}
                 variant="outline"
                 className="flex-1"
+                disabled={isLoading}
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back
@@ -75,9 +65,16 @@ const ReviewPreferences = ({ totalCards, dueCards, onStartReview, onBack }: Revi
               <Button
                 onClick={() => onStartReview(reviewType)}
                 className="flex-1 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
-                disabled={(reviewType === 'due' && dueCards === 0) || (reviewType === 'all' && totalCards === 0)}
+                disabled={isLoading}
               >
-                Start Review
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Fetching Cards...
+                  </>
+                ) : (
+                  'Start Review'
+                )}
               </Button>
             </div>
           </CardContent>

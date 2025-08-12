@@ -3,72 +3,17 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, BookOpen, Upload, RotateCcw } from "lucide-react";
+import { Plus, BookOpen, Upload, RotateCcw, AlertCircle, Brain } from "lucide-react";
 import CardManager from "@/components/CardManager";
 import ReviewMode from "@/components/ReviewMode";
 import FileUpload from "@/components/FileUpload";
 import Header from "@/components/Header";
-
-export interface FlashCard {
-  id: string;
-  front: string;
-  back: string;
-  createdAt: Date;
-  lastReviewed?: Date;
-}
+import { useFlashcards } from "@/contexts/FlashcardContext";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const Index = () => {
-  const [cards, setCards] = useState<FlashCard[]>([
-    {
-      id: "1",
-      front: "What is React?",
-      back: "React is a JavaScript library for building user interfaces, particularly web applications.",
-      createdAt: new Date(),
-    },
-    {
-      id: "2", 
-      front: "What is TypeScript?",
-      back: "TypeScript is a strongly typed programming language that builds on JavaScript.",
-      createdAt: new Date(),
-    }
-  ]);
-
+  const { cards, loading, error } = useFlashcards();
   const [isReviewMode, setIsReviewMode] = useState(false);
-
-  const addCard = (front: string, back: string) => {
-    const newCard: FlashCard = {
-      id: Date.now().toString(),
-      front,
-      back,
-      createdAt: new Date(),
-    };
-    setCards([...cards, newCard]);
-  };
-
-  const updateCard = (id: string, front: string, back: string) => {
-    setCards(cards.map(card => 
-      card.id === id ? { ...card, front, back } : card
-    ));
-  };
-
-  const deleteCard = (id: string) => {
-    setCards(cards.filter(card => card.id !== id));
-  };
-
-  const markCardReviewed = (id: string) => {
-    setCards(cards.map(card =>
-      card.id === id ? { ...card, lastReviewed: new Date() } : card
-    ));
-  };
-
-  const addCardsFromFile = (newCards: Omit<FlashCard, 'id' | 'createdAt'>[]) => {
-    const cardsWithIds = newCards.map(card => ({
-      ...card,
-      id: Date.now().toString() + Math.random().toString(),
-      createdAt: new Date(),
-    }));
-    setCards([...cards, ...cardsWithIds]);
-  };
 
   const startReviewMode = () => {
     setIsReviewMode(true);
@@ -82,7 +27,6 @@ const Index = () => {
     return (
       <ReviewMode
         cards={cards}
-        onMarkReviewed={markCardReviewed}
         onExit={exitReviewMode}
       />
     );
@@ -96,7 +40,14 @@ const Index = () => {
           <p className="text-gray-600 text-lg">Master your knowledge with intelligent flashcards</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {error && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white transform hover:scale-105 transition-transform duration-200">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg">
@@ -106,37 +57,22 @@ const Index = () => {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{cards.length}</div>
+              <p className="text-purple-100 text-sm mt-1">Cards in your collection</p>
             </CardContent>
           </Card>
 
           <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white transform hover:scale-105 transition-transform duration-200">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg">
-                <RotateCcw className="h-5 w-5" />
-                Reviewed Today
+                <Brain className="h-5 w-5" />
+                Study Progress
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">
-                {cards.filter(card => 
-                  card.lastReviewed && 
-                  new Date(card.lastReviewed).toDateString() === new Date().toDateString()
-                ).length}
+                {cards.length > 0 ? '100%' : '0%'}
               </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-indigo-500 to-indigo-600 text-white transform hover:scale-105 transition-transform duration-200">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Plus className="h-5 w-5" />
-                Ready to Review
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">
-                {cards.filter(card => !card.lastReviewed).length}
-              </div>
+              <p className="text-blue-100 text-sm mt-1">Ready for learning</p>
             </CardContent>
           </Card>
         </div>
@@ -146,10 +82,10 @@ const Index = () => {
             onClick={startReviewMode}
             size="lg"
             className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-8 py-3 text-lg"
-            disabled={cards.length === 0}
+            disabled={cards.length === 0 || loading}
           >
             <RotateCcw className="h-5 w-5 mr-2" />
-            Start Review Session
+            {loading ? 'Loading...' : 'Start Review Session'}
           </Button>
         </div>
 
@@ -166,16 +102,11 @@ const Index = () => {
           </TabsList>
 
           <TabsContent value="manage">
-            <CardManager
-              cards={cards}
-              onAddCard={addCard}
-              onUpdateCard={updateCard}
-              onDeleteCard={deleteCard}
-            />
+            <CardManager />
           </TabsContent>
 
           <TabsContent value="upload">
-            <FileUpload onCardsGenerated={addCardsFromFile} />
+            <FileUpload />
           </TabsContent>
         </Tabs>
       </div>

@@ -5,17 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Edit, Trash2, Search } from "lucide-react";
-import { FlashCard } from "@/pages/Index";
+import { Plus, Edit, Trash2, Search, Loader2 } from "lucide-react";
+import { FlashCard } from "@/types/FlashCard";
+import { useFlashcards } from "@/contexts/FlashcardContext";
 
-interface CardManagerProps {
-  cards: FlashCard[];
-  onAddCard: (front: string, back: string) => void;
-  onUpdateCard: (id: string, front: string, back: string) => void;
-  onDeleteCard: (id: string) => void;
-}
-
-const CardManager = ({ cards, onAddCard, onUpdateCard, onDeleteCard }: CardManagerProps) => {
+const CardManager = () => {
+  const { cards, loading, addCard, updateCard, deleteCard } = useFlashcards();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingCard, setEditingCard] = useState<FlashCard | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -27,22 +22,26 @@ const CardManager = ({ cards, onAddCard, onUpdateCard, onDeleteCard }: CardManag
     card.back.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleAddCard = () => {
+  const handleAddCard = async () => {
     if (newCardFront.trim() && newCardBack.trim()) {
-      onAddCard(newCardFront.trim(), newCardBack.trim());
+      await addCard(newCardFront.trim(), newCardBack.trim());
       setNewCardFront("");
       setNewCardBack("");
       setIsAddDialogOpen(false);
     }
   };
 
-  const handleUpdateCard = () => {
+  const handleUpdateCard = async () => {
     if (editingCard && newCardFront.trim() && newCardBack.trim()) {
-      onUpdateCard(editingCard.id, newCardFront.trim(), newCardBack.trim());
+      await updateCard(editingCard.id, newCardFront.trim(), newCardBack.trim());
       setEditingCard(null);
       setNewCardFront("");
       setNewCardBack("");
     }
+  };
+
+  const handleDeleteCard = async (id: string) => {
+    await deleteCard(id);
   };
 
   const startEditing = (card: FlashCard) => {
@@ -72,8 +71,15 @@ const CardManager = ({ cards, onAddCard, onUpdateCard, onDeleteCard }: CardManag
         
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white">
-              <Plus className="h-4 w-4 mr-2" />
+            <Button 
+              className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white"
+              disabled={loading}
+            >
+              {loading ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Plus className="h-4 w-4 mr-2" />
+              )}
               Add New Card
             </Button>
           </DialogTrigger>
@@ -104,10 +110,14 @@ const CardManager = ({ cards, onAddCard, onUpdateCard, onDeleteCard }: CardManag
                 <Button
                   variant="outline"
                   onClick={() => setIsAddDialogOpen(false)}
+                  disabled={loading}
                 >
                   Cancel
                 </Button>
-                <Button onClick={handleAddCard}>
+                <Button onClick={handleAddCard} disabled={loading}>
+                  {loading ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : null}
                   Add Card
                 </Button>
               </div>
@@ -139,6 +149,7 @@ const CardManager = ({ cards, onAddCard, onUpdateCard, onDeleteCard }: CardManag
                   variant="outline"
                   onClick={() => startEditing(card)}
                   className="flex-1"
+                  disabled={loading}
                 >
                   <Edit className="h-3 w-3 mr-1" />
                   Edit
@@ -146,10 +157,15 @@ const CardManager = ({ cards, onAddCard, onUpdateCard, onDeleteCard }: CardManag
                 <Button
                   size="sm"
                   variant="destructive"
-                  onClick={() => onDeleteCard(card.id)}
+                  onClick={() => handleDeleteCard(card.id)}
                   className="flex-1"
+                  disabled={loading}
                 >
-                  <Trash2 className="h-3 w-3 mr-1" />
+                  {loading ? (
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-3 w-3 mr-1" />
+                  )}
                   Delete
                 </Button>
               </div>
@@ -168,6 +184,7 @@ const CardManager = ({ cards, onAddCard, onUpdateCard, onDeleteCard }: CardManag
               onClick={() => setIsAddDialogOpen(true)}
               variant="outline"
               className="text-purple-600 border-purple-200 hover:bg-purple-50"
+              disabled={loading}
             >
               <Plus className="h-4 w-4 mr-2" />
               Create your first card
@@ -202,10 +219,13 @@ const CardManager = ({ cards, onAddCard, onUpdateCard, onDeleteCard }: CardManag
               />
             </div>
             <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={cancelEditing}>
+              <Button variant="outline" onClick={cancelEditing} disabled={loading}>
                 Cancel
               </Button>
-              <Button onClick={handleUpdateCard}>
+              <Button onClick={handleUpdateCard} disabled={loading}>
+                {loading ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : null}
                 Update Card
               </Button>
             </div>

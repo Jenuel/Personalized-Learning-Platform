@@ -37,7 +37,7 @@ services:
     build: ./start
     container_name: start-service
     ports:
-      - "6000:6000"
+      - "6060:6060"
     env_file:
       - ./start/.env
     depends_on:

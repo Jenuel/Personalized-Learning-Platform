@@ -1,7 +1,8 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import connectDB from './config/db.js';
+import { connectDB } from './db/client.js';
 import startRoutes from './routes/startRoutes.js';
+import { createTables } from './db/initDb.js';
 
 dotenv.config();
 
@@ -16,9 +17,10 @@ app.get('/', (req, res) => {
 async function startServer() {
   try {
     await connectDB();
+    await createTables();
 
-    app.listen(3000, () => {
-      console.log(`Server is running on port ${process.env.PORT || 3000}`);
+    app.listen(process.env.PORT || 6060, () => {
+      console.log(`Server is running on port ${process.env.PORT || 6060}`);
     });
 
   } catch (err) {
