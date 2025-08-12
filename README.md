@@ -19,10 +19,10 @@ docker compose-up
 ```
 
 ### Authentication Page
-![Auth Page](Auth_page/.png)
+![Auth Page](docs/Auth_page.png)
 
 ### Home Page
-![Home Page](Home_page/.png)
+![Home Page](docs/Home_page.png)
 
 ### Home Page
-![Review Page](Review_page/.png)
+![Review Page](docs/Review_page.png)
