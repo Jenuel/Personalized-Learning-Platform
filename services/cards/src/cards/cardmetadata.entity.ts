@@ -14,7 +14,7 @@ export class CardMetadata {
   interval: number;
 
   @Column({ type: 'date', default: () => 'CURRENT_DATE' })
-  next_review: string; 
+  next_review: string;
 
   @Column({ type: 'float', default: 2.5 })
   ease_factor: number;

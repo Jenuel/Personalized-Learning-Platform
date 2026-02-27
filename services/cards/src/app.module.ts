@@ -1,4 +1,4 @@
-import { ConfigurableModuleBuilder, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CardsModule } from './cards/cards.module';
@@ -25,7 +25,9 @@ import { CardMetadata } from './cards/cardmetadata.entity';
         entities: [Cards, CardMetadata],
         synchronize: true,
       }),
-  }), CardsModule],
+    }),
+    CardsModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

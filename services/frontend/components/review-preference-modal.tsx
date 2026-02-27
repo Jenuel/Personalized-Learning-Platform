@@ -20,7 +20,7 @@ export function ReviewPreferenceModal({ open, onOpenChange, onSelectPreference }
             <Brain className="h-6 w-6 text-orange-600" />
             <span>Choose Review Mode</span>
           </DialogTitle>
-          <DialogDescription>Select which flashcards you'd like to review in this session.</DialogDescription>
+          <DialogDescription>Select which flashcards you&apos;d like to review in this session.</DialogDescription>
         </DialogHeader>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">

@@ -6,51 +6,49 @@ import { CardMetadata } from './cardmetadata.entity';
 
 @Injectable()
 export class CardsService {
-    constructor(
-        private dataSource: DataSource,
-        @InjectRepository(Cards)
-        private readonly cardsRepository: Repository<Cards>
-    ) {}
+  constructor(
+    private dataSource: DataSource,
+    @InjectRepository(Cards)
+    private readonly cardsRepository: Repository<Cards>,
+  ) {}
 
-    async getAllCards(): Promise<Cards[]> {
-        return this.cardsRepository.find();
+  async getAllCards(): Promise<Cards[]> {
+    return this.cardsRepository.find();
+  }
+
+  async getCardById(cardId: number): Promise<Cards> {
+    const card = await this.cardsRepository.findOneBy({ cardId });
+
+    if (!card) {
+      throw new Error(`Card id: ${cardId} does not exist`);
     }
 
-    async getCardById(cardId: number): Promise<Cards> {
-        const card =  await this.cardsRepository.findOneBy({ cardId });
+    return card;
+  }
 
-        if (!card) {
-            throw new Error(`Card id: ${cardId} does not exist`);
-        }
+  async createCard(cardData: Partial<Cards>): Promise<Cards> {
+    return await this.dataSource.transaction(async (manager) => {
+      const newCard = this.cardsRepository.create(cardData);
 
-        return card;
-    }
+      if (!newCard.metadata) {
+        const meta = new CardMetadata();
+        meta.card = newCard;
+        newCard.metadata = meta;
+      }
 
-    async createCard(cardData: Partial<Cards>): Promise<Cards> {
-        return await this.dataSource.transaction(async (manager) => {
+      return await manager.save(newCard);
+    });
+  }
 
-            const newCard = this.cardsRepository.create(cardData);
+  async updateCard(cardId: number, cardData: Partial<Cards>): Promise<Cards> {
+    const card = await this.getCardById(cardId);
+    const updatedCard = Object.assign(card, cardData);
+    return this.cardsRepository.save(updatedCard);
+  }
 
-            if (!newCard.metadata) {
-                const meta = new CardMetadata();
-                meta.card = newCard;        
-                newCard.metadata = meta;     
-            }
-
-            return await manager.save(newCard);
-        });
-    }
-
-    async updateCard(cardId: number, cardData: Partial<Cards>): Promise<Cards> {
-        const card = await this.getCardById(cardId);
-        const updatedCard = Object.assign(card, cardData);
-        return this.cardsRepository.save(updatedCard);
-    }
-
-    async deleteCard(cardId: number): Promise<{message: string}> {
-        const card = await this.getCardById(cardId);
-        await this.cardsRepository.remove(card);
-        return { message: `Card id: ${cardId} deleted successfully` };
-    }
-
+  async deleteCard(cardId: number): Promise<{ message: string }> {
+    const card = await this.getCardById(cardId);
+    await this.cardsRepository.remove(card);
+    return { message: `Card id: ${cardId} deleted successfully` };
+  }
 }

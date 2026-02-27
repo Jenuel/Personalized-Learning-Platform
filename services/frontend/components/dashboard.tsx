@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useAuth } from "@/contexts/auth-context"
@@ -52,11 +52,7 @@ export function Dashboard() {
   const [reviewCards, setReviewCards] = useState<ReviewCard[]>([])
   const [isInitialLoading, setIsInitialLoading] = useState(true)
 
-  useEffect(() => {
-    loadFlashcards()
-  }, [])
-
-  const loadFlashcards = async () => {
+  const loadFlashcards = useCallback(async () => {
     try {
       const cards = await fetchFlashcards()
       setFlashcards(cards)
@@ -66,7 +62,11 @@ export function Dashboard() {
     } finally {
       setIsInitialLoading(false)
     }
-  }
+  }, [fetchFlashcards])
+
+  useEffect(() => {
+    loadFlashcards()
+  }, [loadFlashcards])
 
   const handleAddFlashcard = async (question: string, answer: string) => {
     try {
