@@ -1,15 +1,40 @@
-FROM node:20-alpine
+# ─── Stage 1: Dependencies ────────────────────────────────────────────────────
+FROM node:20-alpine AS deps
 
-WORKDIR /usr/src/app
+WORKDIR /app
 
 COPY package*.json ./
+RUN npm ci --only=production && cp -r node_modules /prod_node_modules
+RUN npm ci
 
-RUN npm install
+# ─── Stage 2: Build ───────────────────────────────────────────────────────────
+FROM node:20-alpine AS builder
 
-RUN npm install -g nodemon
+WORKDIR /app
 
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-EXPOSE 3000
+# ─── Stage 3: Production ──────────────────────────────────────────────────────
+FROM node:20-alpine AS production
 
-CMD ["nodemon", "index.js"]
+ENV NODE_ENV=production
+
+RUN addgroup --system --gid 1001 nodejs \
+  && adduser --system --uid 1001 appuser
+
+WORKDIR /app
+
+COPY --from=deps /prod_node_modules ./node_modules
+COPY --from=builder /app .
+
+RUN rm -rf .gitignore README.md
+
+USER appuser
+
+EXPOSE 4000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget -qO- http://localhost:4000/health || exit 1
+
+CMD ["node", "index.js"]

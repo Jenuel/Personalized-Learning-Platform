@@ -1,37 +1,38 @@
-# Base image
+FROM node:20-alpine AS deps
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci
+
 FROM node:20-alpine AS builder
 
-# Set working directory
-WORKDIR /usr/src/app
+WORKDIR /app
 
-# Install app dependencies
-COPY package*.json ./
-RUN npm install
-
-# Copy app source code
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Build the app (TypeScript to JavaScript in /dist)
 RUN npm run build
 
-# -------------------
-# Production Stage
 FROM node:20-alpine AS production
 
-WORKDIR /usr/src/app
+ENV NODE_ENV=production
 
-# Install only production dependencies
+RUN addgroup --system --gid 1001 nodejs \
+    && adduser --system --uid 1001 appuser
+
+WORKDIR /app
+
 COPY package*.json ./
-RUN npm install --only=production
+RUN npm ci --only=production
 
-# Copy compiled app from builder
-COPY --from=builder /usr/src/app/dist ./dist
+COPY --from=builder /app/dist ./dist
 
-# Copy any other necessary files (e.g., config)
-# COPY ./config ./config  # Uncomment if needed
+USER appuser
 
-# Expose port (change if using a different port)
-EXPOSE 3000
+EXPOSE 5000
 
-# Run the app using npm run start (runs dist/main.js)
-CMD ["npm", "run", "start"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+    CMD wget -qO- http://localhost:5000/health || exit 1
+
+CMD ["node", "dist/main"]
