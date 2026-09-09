@@ -1,0 +1,126 @@
+name: plp-dev
+
+services:
+  postgresdb:
+    image: postgres:16-alpine
+    container_name: plp-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - plp-postgres-data:/var/lib/postgresql/data
+      - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  cards-service:
+    build:
+      context: ./cards
+      dockerfile: Dockerfile
+      target: production
+    container_name: plp-cards
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./cards/.env
+    environment:
+      NODE_ENV: development
+      DB_HOST: postgresdb
+    depends_on:
+      postgresdb:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -qO- http://localhost:5000/health || exit 1" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  automation-service:
+    build:
+      context: ./automation
+      dockerfile: Dockerfile
+      target: production
+    container_name: plp-automation
+    restart: unless-stopped
+    ports:
+      - "7000:7000"
+    env_file:
+      - ./automation/.env
+    environment:
+      ENVIRONMENT: development
+    depends_on:
+      postgresdb:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:7000/health')\" || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  assessment-service:
+    build:
+      context: ./start
+      dockerfile: Dockerfile
+      target: production
+    container_name: plp-assessment
+    restart: unless-stopped
+    ports:
+      - "6060:6060"
+    env_file:
+      - ./start/.env
+    environment:
+      NODE_ENV: development
+      DB_HOST: postgresdb
+    depends_on:
+      postgresdb:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -qO- http://localhost:6060/health || exit 1" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  frontend-service:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: production
+      args:
+        NEXT_PUBLIC_AUTH_URL: http://localhost:4000
+        NEXT_PUBLIC_CARDS_URL: http://localhost:5000
+        NEXT_PUBLIC_AUTOMATION_URL: http://localhost:7000
+        NEXT_PUBLIC_ASSESSMENT_URL: http://localhost:6060
+    container_name: plp-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      - cards-service
+      - automation-service
+      - assessment-service
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -qO- http://localhost:3000/api/health || exit 1" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  plp-postgres-data:
+    name: plp-postgres-data
+
+networks:
+  default:
+    name: plp-network

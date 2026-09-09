@@ -14,5 +14,15 @@
 - 🧠 Gemini Powered Automation for Making Flashcards
 
 ## ⚙️ Getting Started
+```
+docker compose-up
+```
 
-### Prerequisites
+### Authentication Page
+![Auth Page](docs/Auth_page.png)
+
+### Home Page
+![Home Page](docs/Home_page.png)
+
+### Home Page
+![Review Page](docs/Review_page.png)
